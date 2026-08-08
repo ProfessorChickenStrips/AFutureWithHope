@@ -87,7 +87,7 @@
       const logoPromise=new Promise((resolve,reject)=>{churchLogo.onload=()=>{logoReady=true;resolve(churchLogo)};churchLogo.onerror=()=>reject(new Error("The embedded Holy Trinity logo could not be loaded."));churchLogo.src=CHURCH_LOGO_SRC;if((churchLogo.complete||churchLogo.width)&&churchLogo.width){logoReady=true;resolve(churchLogo)}});
       const clamp=(v,min,max)=>Math.min(max,Math.max(min,v)),lerp=(a,b,t)=>a+(b-a)*t,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2,mod=(v,d)=>((v%d)+d)%d,money=v=>"$"+Math.round(v).toLocaleString("en-US");
       function makeTimeline(c){if(c.mode==="resting")return{hold:0,climb:0,arrival:LOOP_SECONDS,celebration:Boolean(c.restPledgeWin),total:LOOP_SECONDS};const r=Math.abs(c.climbNewReturns-c.climbLastReturns)/120,p=Math.abs(c.climbNewPledged-c.climbLastPledged)/600000,climb=Math.min(8,2.5+5.5*Math.max(r,p)),celebration=Boolean(c.returnWin||c.pledgeWin),arrival=celebration?CELEBRATION_SECONDS:ARRIVAL_SECONDS;return{hold:HOLD_SECONDS,climb,arrival,celebration,total:HOLD_SECONDS+climb+arrival}}
-      function sceneState(t,c){const l=c.timeline;if(c.mode==="resting")return{returns:c.restReturns,pledged:c.restPledged,pose:"rest",sway:Math.sin(t/LOOP_SECONDS*Math.PI*2),gait:0,lively:c.restPledgeWin,fullCelebrate:c.restPledgeWin,fireworks:false,celebrationTime:t};if(t<l.hold)return{returns:c.climbLastReturns,pledged:c.climbLastPledged,pose:"rest",sway:Math.sin(t/3*Math.PI*2),gait:0,lively:false,fullCelebrate:false,fireworks:false,celebrationTime:0};if(t<l.hold+l.climb){const raw=(t-l.hold)/l.climb,p=ease(clamp(raw,0,1));return{returns:lerp(c.climbLastReturns,c.climbNewReturns,p),pledged:lerp(c.climbLastPledged,c.climbNewPledged,p),pose:"climb",sway:0,gait:raw*Math.max(4,8*Math.max(.35,Math.abs(c.climbNewReturns-c.climbLastReturns)/120)),lively:true,fullCelebrate:false,fireworks:false,celebrationTime:raw*LOOP_SECONDS}}const ct=t-l.hold-l.climb;return{returns:c.climbNewReturns,pledged:c.climbNewPledged,pose:c.pledgeWin?"amazed":"rest",sway:Math.sin(ct/2.5*Math.PI*2),gait:0,lively:c.returnWin||c.pledgeWin,fullCelebrate:c.pledgeWin,fireworks:c.returnWin,celebrationTime:ct}}
+      function sceneState(t,c){const l=c.timeline;if(c.mode==="resting")return{returns:c.restReturns,pledged:c.restPledged,pose:"rest",sway:Math.sin(t/LOOP_SECONDS*Math.PI*2),gait:0,lively:c.restPledgeWin,fullCelebrate:c.restPledgeWin,fireworks:false,celebrationTime:t};if(t<l.hold)return{returns:c.climbLastReturns,pledged:c.climbLastPledged,pose:"rest",sway:Math.sin(t/3*Math.PI*2),gait:0,lively:false,fullCelebrate:false,fireworks:false,celebrationTime:0};if(t<l.hold+l.climb){const raw=(t-l.hold)/l.climb,p=ease(clamp(raw,0,1));return{returns:lerp(c.climbLastReturns,c.climbNewReturns,p),pledged:lerp(c.climbLastPledged,c.climbNewPledged,p),pose:"climb",sway:0,gait:raw*Math.max(4,8*Math.max(.35,Math.abs(c.climbNewReturns-c.climbLastReturns)/120))*Math.sign(c.climbNewReturns-c.climbLastReturns||1),lively:true,fullCelebrate:false,fireworks:false,celebrationTime:raw*LOOP_SECONDS}}const ct=t-l.hold-l.climb;return{returns:c.climbNewReturns,pledged:c.climbNewPledged,pose:c.pledgeWin?"amazed":"rest",sway:Math.sin(ct/2.5*Math.PI*2),gait:0,lively:c.returnWin||c.pledgeWin,fullCelebrate:c.pledgeWin,fireworks:c.returnWin,celebrationTime:ct}}
       function slopeY(x){const t=clamp((x-X_START)/(X_PEAK-X_START),0,1);return 560-380*t-15*Math.sin(Math.PI*t)-6*Math.sin(3*Math.PI*t)}
       function slopeAngle(x){const d=2;return Math.atan2(slopeY(x+d)-slopeY(x-d),d*2)}
       const xReturns=v=>lerp(X_START,X_PEAK,clamp(v/120,0,1)),xPledged=v=>lerp(X_START,X_PEAK,clamp(v/600000,0,1));
@@ -153,22 +153,51 @@
       function torso(g){g.fillStyle="#fbf7ec";g.strokeStyle="#574943";g.lineWidth=2.2;rr(g,-19,-63,38,40,9);g.fill();g.stroke();g.fillStyle="#336675";rr(g,-17,-42,34,27,5);g.fill();g.stroke();g.strokeStyle="#719a53";g.lineWidth=3;g.beginPath();g.moveTo(-10,-59);g.lineTo(-7,-38);g.moveTo(10,-59);g.lineTo(7,-38);g.stroke()}
       function resting(g,s){g.rotate(s*.055);const k=s*1.4;g.save();g.strokeStyle="#705c55";g.lineWidth=4.5;g.lineCap="round";g.beginPath();g.moveTo(31,-69);g.lineTo(44,4);g.stroke();g.restore();limb(g,[[-9,-19],[-11-k,-8],[-14-k*.3,2]],"#e7e2d7",8.2);limb(g,[[9,-19],[11+k,-8],[14+k*.3,2]],"#e7e2d7",8.2);limb(g,[[-17,-55],[-29,-39],[-22,-27]],"#e8bd92",7.2);limb(g,[[17,-55],[29,-41],[31,-67]],"#e8bd92",7.2);torso(g);head(g,0,-79,s*.025,false);g.fillStyle="#3e403d";rr(g,-24-k*.25,-1,20,7,4);g.fill();rr(g,4+k*.25,-1,20,7,4);g.fill()}
       function climbing(g,p){
-        const ph=p*Math.PI*2,stride=Math.sin(ph);
-        // Uphill is screen-right. The leg moving right is the one that lifts and reaches forward;
-        // the opposite leg stays lower and trails left. This prevents the visual "moonwalk" effect.
-        const leftLift=Math.max(0,stride),rightLift=Math.max(0,-stride),bob=1.6*Math.abs(Math.sin(ph));
+        // True stance/swing gait. During stance a boot travels backward relative to the
+        // torso at the same rate the torso advances, which makes it read as planted on
+        // the mountain instead of sliding/moonwalking. During swing it lifts and steps
+        // forward. Negative p reverses the cycle for a downhill move.
+        const dir=p<0?-1:1,cycle=Math.abs(p),TAU=Math.PI*2;
+        const groundY=x=>2-.30*x; // local approximation of the rising mountain surface
+        function foot(stepOffset){
+          let u=mod(cycle+stepOffset,1),x,lift=0;
+          if(u<.60){
+            const q=u/.60;
+            x=dir*(14-28*q);                    // planted: forward -> trailing
+          }else{
+            const q=(u-.60)/.40;
+            x=dir*(-14+28*ease(q));             // swing: trailing -> forward
+            lift=Math.sin(Math.PI*q)*13;
+          }
+          return{x,y:groundY(x)-lift,lift,u};
+        }
+        const lf=foot(0),rf=foot(.5);
+        const bob=1.15*Math.sin(cycle*TAU*2-Math.PI/2)+1.15;
         g.translate(0,-bob);
-        g.save();g.strokeStyle="#705c55";g.lineWidth=4.5;g.lineCap="round";g.beginPath();g.moveTo(32,-72);g.lineTo(44-stride*2,5);g.stroke();g.restore();
-        // Legs: forward/reaching foot moves toward +x (uphill/right) and rises; trailing foot moves back/downhill.
-        limb(g,[[-9,-19],[-9+7*stride,-9-5*leftLift],[-13+12*stride,2-9*leftLift]],"#e7e2d7",8.2);
-        limb(g,[[9,-19],[9-7*stride,-9-5*rightLift],[13-12*stride,2-9*rightLift]],"#e7e2d7",8.2);
-        // Arms counter-swing against the legs for a readable climbing gait.
-        limb(g,[[-17,-55],[-28-5*stride,-41],[-22-8*stride,-29]],"#e8bd92",7.2);
-        limb(g,[[17,-55],[28+5*stride,-41],[30+8*stride,-67]],"#e8bd92",7.2);
-        torso(g);head(g,0,-79,-.03,false);
+
+        // Alpenstock plants slightly ahead of the body and rocks much less than the legs.
+        g.save();g.strokeStyle="#705c55";g.lineWidth=4.5;g.lineCap="round";g.beginPath();
+        g.moveTo(32,-72);g.lineTo(44+dir*2*Math.sin(cycle*TAU),5);g.stroke();g.restore();
+
+        // Knees are solved from hip-to-foot geometry with a modest outward bend.
+        function drawLeg(hipX,f,side){
+          const kneeX=hipX+(f.x-hipX)*.52+side*3.5;
+          const kneeY=-9+(f.y+9)*.40-(f.lift>0?f.lift*.16:0);
+          limb(g,[[hipX,-19],[kneeX,kneeY],[f.x,f.y]],"#e7e2d7",8.2);
+        }
+        drawLeg(-9,lf,-1);drawLeg(9,rf,1);
+
+        // Counter-swing the arms: the arm opposite the forward boot reaches uphill.
+        const lead=(lf.x-rf.x)*dir; // positive when left boot is farther forward
+        const armSwing=clamp(lead/22,-1,1);
+        limb(g,[[-17,-55],[-28-5*armSwing*dir,-41],[-22-8*armSwing*dir,-29]],"#e8bd92",7.2);
+        limb(g,[[17,-55],[28+5*armSwing*dir,-41],[30+8*armSwing*dir,-67]],"#e8bd92",7.2);
+        torso(g);head(g,0,-79,-.03*dir,false);
+
+        // Boots stay aligned with their feet rather than being separately sinusoid-driven.
         g.fillStyle="#3e403d";
-        rr(g,-24+12*stride,-1-9*leftLift,21,7,4);g.fill();
-        rr(g,3-12*stride,-1-9*rightLift,21,7,4);g.fill();
+        rr(g,lf.x-11,lf.y-3,22,7,4);g.fill();
+        rr(g,rf.x-11,rf.y-3,22,7,4);g.fill();
       }
       function amazed(g,t){const ph=t/LOOP_SECONDS*Math.PI*2,b=-2*Math.abs(Math.sin(ph));g.translate(0,b);limb(g,[[-9,-19],[-13,-7],[-10,2]],"#e7e2d7",8.2);limb(g,[[9,-19],[14,-7],[20,1]],"#e7e2d7",8.2);limb(g,[[-17,-55],[-31,-73],[-27,-91]],"#e8bd92",7.2);limb(g,[[17,-55],[31,-73],[37,-91]],"#e8bd92",7.2);torso(g);head(g,2,-79,.12,true,true);g.fillStyle="#3e403d";rr(g,-22,-2,21,7,4);g.fill();rr(g,4,-2,21,7,4);g.fill();g.save();g.translate(-27,-110-7*Math.abs(Math.sin(ph)));g.rotate(-.2+.15*Math.sin(ph));g.fillStyle="#336675";g.strokeStyle="#574943";g.lineWidth=2;g.beginPath();g.ellipse(0,0,18,6,0,0,Math.PI*2);g.fill();g.stroke();g.strokeStyle="#d2a654";g.beginPath();g.moveTo(7,-5);g.lineTo(14,-15);g.stroke();g.restore()}
       function climber(g,x,y,s){g.save();g.translate(x,y-3);g.scale(1.02,1.02);if(s.pose==="rest")resting(g,s.sway);else if(s.pose==="amazed")amazed(g,s.celebrationTime);else climbing(g,s.gait);g.restore()}
